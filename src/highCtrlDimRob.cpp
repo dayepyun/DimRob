@@ -94,36 +94,7 @@ void HighCtrl::resetValveMotor()
  ***********************************************/
 void HighCtrl::sensorCallback(const xeno_interface::Dimrob& msg)
 {
-//
-//	ROS_INFO("%f ", msg.i_val_temp_scb);
-//	ROS_INFO("%f ", msg.i_val_temp_mot);
-//	ROS_INFO("%f ", msg.i_val_volt_bat);
-//	ROS_INFO("%f ", msg.i_val_pres_oil_1);
-//	ROS_INFO("%f ", msg.i_val_pres_oil_4);
-//	ROS_INFO("%f ", msg.i_val_pres_oil_5);
-//	ROS_INFO("%f ", msg.i_val_pres_oil);
-//	ROS_INFO("%f ", msg.i_val_flow_oil);
-//	ROS_INFO("%f ", msg.i_val_temp_oil);
-//	ROS_INFO("%f ", msg.i_val_pres_oil_3);
-//	ROS_INFO("%f ", msg.i_val_pres_oil_2);
-//	ROS_INFO("%d ", msg.i_encoderCount);
-//	ROS_INFO("%f ", msg.s_motorRPMCurrent);
-//	ROS_INFO("%d ", msg.s_motorCmdCurrent);
-//
-//	ROS_INFO("%d ", msg.i_chargerEnabled);
-//	ROS_INFO("%d ", msg.i_chargerPowered);
-//	ROS_INFO("%d ", msg.i_hwEstopOpened);
-//	ROS_INFO("%d ", msg.i_manualModeEnabled);
-//	ROS_INFO("%d ", msg.i_autoModeEnabled);
-//	ROS_INFO("%d ", msg.s_nowState);
-//	ROS_INFO("%d ", msg.s_errCondDetected);
-//
-//	ROS_INFO("%f ", msg.o_motorRPM);
-//	ROS_INFO("sw estop %d ", msg.o_swEstopEnabled);
-
-
-	fprintf (fp, "%f \n", msg.i_val_pres_oil);
-
+	ROS_INFO("%d ", msg.s_errCondDetected);
 }
 
 /********************************************//**

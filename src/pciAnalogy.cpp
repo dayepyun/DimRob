@@ -5,7 +5,6 @@
  *	These functions can be called in main file to perform the data acquisition.\n
  *
  *
- *  @author HyQ
  *  @author R. Pyun
  *
  */
@@ -31,7 +30,7 @@
  *
  *
  *  @param[in] device_name	device name
- *	@param[in] config_file	configuration file path
+ *  @param[in] config_file	configuration file path
  ***********************************************/
 pciAnalogy::pciAnalogy(const char * device_name, const char * config_file)
 :pciBase(device_name,config_file)
@@ -67,7 +66,8 @@ int pciAnalogy::Open()
 
     //1. Open an Analogy device
     ret = a4l_open(&dsc, dev_name);
-    if (ret < 0) {
+    if (ret < 0) 
+    {
         printf( "pciAnalogy::Open : a4l_open %s failed (ret=%d)\n", dev_name, ret);
         return boardIsOpen;
     }
@@ -75,7 +75,8 @@ int pciAnalogy::Open()
     //dynamically allocate memory and sets the first "dsc.sbsize" bytes of the area starting at "dsc.sbdata" to zero
     dsc.sbdata = malloc(dsc.sbsize);
     bzero(dsc.sbdata, dsc.sbsize);
-    if (dsc.sbdata == NULL) {
+    if (dsc.sbdata == NULL) 
+    {
         ret = -ENOMEM;
         printf( "pciAnalogy::Open : info buffer allocation failed\n");
         return boardIsOpen;
@@ -83,7 +84,8 @@ int pciAnalogy::Open()
 
     //2. Fill the descriptor
     ret = a4l_fill_desc(&dsc);
-    if (ret < 0) {
+    if (ret < 0) 
+    {
     	printf( "pciAnalogy::Open : a4l_fill_desc failed (ret=%d)\n", ret);
         return boardIsOpen;
     }
@@ -98,17 +100,18 @@ int pciAnalogy::Open()
 
 
     // 3. get Analog Input channels information
-    for (int ch=0; ch<ADC_NUM; ch++) {
+    for (int ch=0; ch<ADC_NUM; ch++) 
+    {
 
         ret = a4l_get_chinfo(&dsc, SUBD_AI, ch, &ai_chinfo[ch]);
-        if (ret < 0) {
-        	printf(
-                    "pciAnalogy::Open : info for channel %d on subdevice %d not available (ret=%d)\n",
-                    ch, SUBD_AI, ret);
+        if (ret < 0) 
+        {
+        	printf("pciAnalogy::Open : info for channel %d on subdevice %d not available (ret=%d)\n", ch, SUBD_AI, ret);
         }
 
         ret = a4l_get_rnginfo(&dsc, SUBD_AI, ch, ai_conf[ch].range, &ai_rnginfo[ch]); //AIN_RNG
-        if (ret < 0) {
+        if (ret < 0) 
+	{
         	printf( "pciAnalogy::Open : failed to recover range descriptor\n");
         }
 
@@ -120,17 +123,18 @@ int pciAnalogy::Open()
     }
 
     // 3. get Analog Output channels information
-    for (int ch=0; ch<DAC_NUM; ch++) {
+    for (int ch=0; ch<DAC_NUM; ch++) 
+    {
 
         ret = a4l_get_chinfo(&dsc, SUBD_AO, ch, &ao_chinfo[ch]);
-        if (ret < 0) {
-            printf(
-                    "pciAnalogy:: info for channel %d on subdevice %d not available (ret=%d)\n",
-                    ch, SUBD_AO, ret);
+        if (ret < 0) 
+	{
+            printf("pciAnalogy:: info for channel %d on subdevice %d not available (ret=%d)\n", ch, SUBD_AO, ret);
         }
 
         ret = a4l_get_rnginfo(&dsc, SUBD_AO, ch, 0, &ao_rnginfo[ch]);
-        if (ret < 0) {
+        if (ret < 0) 
+        {
             printf( "pciAnalogy:: failed to recover range descriptor\n");
         }
 
@@ -217,7 +221,7 @@ int pciAnalogy::Open()
 
 	  ret = a4l_snd_insn(&dsc, &insn);
 	  if (ret < 0)
-		  printf("re-route PFI channels: routing of channel %d failed (ret=%d)\n",i,ret);
+	  printf("re-route PFI channels: routing of channel %d failed (ret=%d)\n",i,ret);
 	}
 
     // 4. Configuration of digital channel to input or output
@@ -270,7 +274,8 @@ int pciAnalogy::ReadAD(int channel, double &physical_value, unsigned short &raw)
  	//Channel + range + reference
     ret = a4l_sync_read(&dsc, SUBD_AI, PACK(channel,ai_conf[channel].range,ai_conf[channel].reference), 0, &raw, tmp);
 
-    if (ret < 0) {
+    if (ret < 0) 
+    {
     	printf( "pciAnalogy::ReadDA : a4l_sync_read failed (ret=%d)\n", ret);
         return ret;
     }
@@ -280,15 +285,14 @@ int pciAnalogy::ReadAD(int channel, double &physical_value, unsigned short &raw)
     //convert rawdata into voltage data (the calibration coefficient is used here)
     ret = rawToDouble(channel, ai_chinfo[channel], ai_rnginfo[channel], &physical_value, &raw_s);
 
-    if ( ret < 0 ) {
+    if ( ret < 0 ) 
+    {
     	printf( "pciAnalogy::ReadDA : data conversion failed (ret=%d)\n", ret);
         return ret;
     }
 
 #if DEBUG == 1
-    printf("AI channel %d : range [%ld,%ld] ### : raw %d -> phys %g\n",
-           channel,
-           ai_rnginfo[channel]->min, ai_rnginfo[channel]->max, raw, physical_value);
+    printf("AI channel %d : range [%ld,%ld] ### : raw %d -> phys %g\n", channel, ai_rnginfo[channel]->min, ai_rnginfo[channel]->max, raw, physical_value);
 #endif
 
     return ret;
@@ -309,21 +313,20 @@ int pciAnalogy::WriteDA(int channel, double physical_value)
     int ret = 0;
     unsigned short raw_convert;
 
-	//calibrated value with NI coefficient
+    //calibrated value with NI coefficient
     raw_convert=round((physical_value*CALIB_AO[1])+CALIB_AO[0]+32768);
 
     ret = a4l_sync_write(&dsc, SUBD_AO, CHAN(channel), 0, &raw_convert, sizeof(raw_convert));
 
-    if ( ret < 0) {
+    if ( ret < 0) 
+    {
     	printf( "pciAnalogy::WriteDA : a4l_sync_write failed (ret=%d)\n", ret);
         return ret;
     }
 
 
 #if DEBUG == 1
-	printf("AO channel %d : range [%ld,%ld] ### : raw %d-> phys %g \n",
-           channel,
-           ao_rnginfo[channel]->min, ao_rnginfo[channel]->max, raw_convert, physical_value);
+	printf("AO channel %d : range [%ld,%ld] ### : raw %d-> phys %g \n", channel, ao_rnginfo[channel]->min, ao_rnginfo[channel]->max, raw_convert, physical_value);
 #endif
 
     return ret;
@@ -348,10 +351,10 @@ int pciAnalogy::SetDIO(int ch_group, unsigned direction)
     if(ch_group < (DGR_NUM-(PFI_NUM/DCH_NUM))) //for P0 channels
     {
     	//for every channel in a group
-		for (int j=(ch_group*DCH_NUM); j<((ch_group*DCH_NUM)+DCH_NUM); j++)
-		{
-    		  ret = a4l_config_subd(&dsc, SUBD_DIO, direction,j);
-    		  mask = mask | (direction <<j);
+	for (int j=(ch_group*DCH_NUM); j<((ch_group*DCH_NUM)+DCH_NUM); j++)
+	{
+    	 	ret = a4l_config_subd(&dsc, SUBD_DIO, direction,j);
+    		mask = mask | (direction <<j);
     	}
 	    dio->dio_conf = (dio->dio_conf) | mask; //store configuration bit mask(0:input 1:output)
     }
@@ -359,17 +362,18 @@ int pciAnalogy::SetDIO(int ch_group, unsigned direction)
     {
     	//for every channel in a group for P1 and P2 pins
     	//subdevice == SUBD_DIO_F, and channel starts from 0 again
-		for (int j=((ch_group-(DGR_NUM-(PFI_NUM/DCH_NUM)))*DCH_NUM); j<(((ch_group-(DGR_NUM-4))*DCH_NUM)+DCH_NUM); j++)
-		{
-  		  ret = a4l_config_subd(&dsc, SUBD_DIO_F, direction,j);
-		  mask_f = mask_f | (direction <<j);
+	for (int j=((ch_group-(DGR_NUM-(PFI_NUM/DCH_NUM)))*DCH_NUM); j<(((ch_group-(DGR_NUM-4))*DCH_NUM)+DCH_NUM); j++)
+	{
+  	  	ret = a4l_config_subd(&dsc, SUBD_DIO_F, direction,j);
+		mask_f = mask_f | (direction <<j);
     	}
 	    dio_f->dio_conf = (dio_f->dio_conf ) | mask_f; //store configuration bit mask(0:input 1:output)
     }
     else
     	ret = -EINVAL;
 
-    if ( ret < 0) {
+    if ( ret < 0) 
+    {
     	printf( "DIO configuration of group %d failed (ret=%d)\n", ch_group, ret);
         return ret;
     }
@@ -390,9 +394,9 @@ int pciAnalogy::SetDIO(int ch_group, unsigned direction)
  *	If a channel is configured to a digital input, the value indicates the input status of the channel. \n
  *	If a channel is configured to a digital output, the error is returned.\n
  *
- *	@param[in] subdevice 		subdevice (either SUBD_DIO or SUBD_DIO_F)
- * 	@param[in] channel 			channel to read
- *	@param[in/out] value	the value read (range: [0,1]=[OFF,ON])
+ *  @param[in] subdevice 	subdevice (either SUBD_DIO or SUBD_DIO_F)
+ *  @param[in] channel 		channel to read
+ *  @param[in/out] value	the value read (range: [0,1]=[OFF,ON])
  *  @return 	0 on success. Otherwise: error code in errno.h\n
  ***********************************************/
 int pciAnalogy::ReadDI(int subdevice, int channel, bool &value)
@@ -400,49 +404,50 @@ int pciAnalogy::ReadDI(int subdevice, int channel, bool &value)
     int		ret = 0;
     unsigned mask = 0, buffer = 0, config = 0;
     a4l_chinfo_t *chinfo;
-	digital_t * dio;
+    digital_t * dio;
 
     if(subdevice == SUBD_DIO)
-	{
+    {
     	dio =  &io_board.dio;
-	}
+    }
     else
     {
     	dio =  &io_board.dio_f;
     }
 
-	ret= a4l_get_chinfo(&dsc, subdevice, channel, &chinfo);
-	if(ret < 0)
+    ret= a4l_get_chinfo(&dsc, subdevice, channel, &chinfo);
+    if(ret < 0)
+    {
+	printf("DIO: info for channel %d on subdevice %d not available (err=%d)\n", channel, subdevice, ret);
+	return ret;
+    }
+    else
+    {
+	mask = 0x0001 << channel;
+
+	if(((dio->dio_conf) & mask) != 0)//if the channel is not digital input
 	{
-		printf("DIO: info for channel %d on subdevice %d not available (err=%d)\n", channel, subdevice, ret);
-	    return ret;
+		printf("Channel %d on subdevice %d is not assigned as input channel\n", channel, subdevice);
+		return ret;
 	}
 	else
 	{
-		mask = 0x0001 << channel;
+		ret = a4l_sync_dio(&dsc, subdevice, &mask, &buffer);
 
-		if(((dio->dio_conf) & mask) != 0)//if the channel is not digital input
+		if (ret < 0) 
 		{
-			printf("Channel %d on subdevice %d is not assigned as input channel\n", channel, subdevice);
-		    return ret;
-		}
-		else
-		{
-			ret = a4l_sync_dio(&dsc, subdevice, &mask, &buffer);
-
-			if (ret < 0) {
-				printf("insn_bits: a4l_sync_dio() failed (err=%d)\n", ret);
-				return ret;
-			}
-
-			value = buffer & mask;
+			printf("insn_bits: a4l_sync_dio() failed (err=%d)\n", ret);
+			return ret;
 		}
 
+		value = buffer & mask;
 	}
+
+     }
 
 
 #if DEBUG == 1
-		printf( "DIO subdevice %d: channel %d is [Digital %s] %s\n",  subdevice, channel,  ((dio->dio_conf) & mask) == 0 ? "Input" : "Output", value == 1 ? "ON" : "OFF");
+	printf( "DIO subdevice %d: channel %d is [Digital %s] %s\n",  subdevice, channel,  ((dio->dio_conf) & mask) == 0 ? "Input" : "Output", value == 1 ? "ON" : "OFF");
 #endif
     return ret;
 }
@@ -455,9 +460,9 @@ int pciAnalogy::ReadDI(int subdevice, int channel, bool &value)
  *	If a channel is configured to a digital input, the error is returned. \n
  *	If a channel is configured to a digital output, the value indicates the desired output value.\n
  *
- *	@param[in] subdevice 		subdevice (either SUBD_DIO or SUBD_DIO_F)
- * 	@param[in] channel 			channel to write
- *	@param[in/out] value	the value written (range: [0,1]=[OFF,ON])
+ *  @param[in] subdevice 	subdevice (either SUBD_DIO or SUBD_DIO_F)
+ *  @param[in] channel 		channel to write
+ *  @param[in/out] value	the value written (range: [0,1]=[OFF,ON])
  *  @return 	0 on success. Otherwise: error code in errno.h\n
  ***********************************************/
 int pciAnalogy::WriteDO(int subdevice, int channel, bool &value)
@@ -465,53 +470,53 @@ int pciAnalogy::WriteDO(int subdevice, int channel, bool &value)
     int		ret = 0;
     unsigned mask = 0, buffer = 0, config = 0;
     a4l_chinfo_t *chinfo;
-	digital_t * dio;
+    digital_t * dio;
 
     if(subdevice == SUBD_DIO)
-	{
+    {
     	dio =  &io_board.dio;
-	}
+    }
     else
     {
     	dio =  &io_board.dio_f;
     }
 
-	ret= a4l_get_chinfo(&dsc, subdevice, channel, &chinfo);
-	if(ret < 0)
+    ret= a4l_get_chinfo(&dsc, subdevice, channel, &chinfo);
+    if(ret < 0)
+    {
+	printf("DIO: info for channel %d on subdevice %d not available (err=%d)\n", channel, subdevice, ret);
+	return ret;
+    }
+    else
+    {
+
+	mask = 0x0001 << channel;
+	buffer = value << channel;
+
+	if(((dio->dio_conf) & mask ) == 0)//if the channel is not digital output
 	{
-		printf("DIO: info for channel %d on subdevice %d not available (err=%d)\n", channel, subdevice, ret);
-	    return ret;
+	    	printf("Channel %d on subdevice %d is not assigned as output channel\n", channel, subdevice);
+	    	return ret;
 	}
 	else
 	{
+		ret = a4l_sync_dio(&dsc, subdevice, &mask, &buffer);
 
-		mask = 0x0001 << channel;
-		buffer = value << channel;
-
-		if(((dio->dio_conf) & mask ) == 0)//if the channel is not digital output
+		if (ret < 0) 
 		{
-			printf("Channel %d on subdevice %d is not assigned as output channel\n", channel, subdevice);
-		    return ret;
+			printf("insn_bits: a4l_sync_dio() failed (err=%d)\n", ret);
+			return ret;
 		}
-		else
-		{
-			ret = a4l_sync_dio(&dsc, subdevice, &mask, &buffer);
 
-
-			if (ret < 0) {
-				printf("insn_bits: a4l_sync_dio() failed (err=%d)\n", ret);
-				return ret;
-			}
-
-			value = buffer & mask;
-
-		}
+		value = buffer & mask;
 
 	}
 
+    }
+
 
 #if DEBUG == 1
-		printf( "DIO subdevice %d: channel %d is [Digital %s] %s\n",  subdevice, channel,  ((dio->dio_conf) & mask) == 0 ? "Input" : "Output",value == 1 ? "ON" : "OFF");
+	printf( "DIO subdevice %d: channel %d is [Digital %s] %s\n",  subdevice, channel,  ((dio->dio_conf) & mask) == 0 ? "Input" : "Output",value == 1 ? "ON" : "OFF");
 #endif
     return ret;
 }
@@ -519,140 +524,135 @@ int pciAnalogy::WriteDO(int subdevice, int channel, bool &value)
  *  @brief Set-up counter
  *
  *
- *	@param[in]	subdevice		subdevice of counter (only SUBD_CNT or SUBD_CNT_1 for NI PCI 6221 and 6229 card)
- *	@param[in]	channel_pfi	PFI pin which reads the pulse signal, use PFI6 for counter 0 and PFI7 for counter 1 (e.g. CH A from the encoder or CLK from the converter chip)
+ *  @param[in]	subdevice		subdevice of counter (only SUBD_CNT or SUBD_CNT_1 for NI PCI 6221 and 6229 card)
+ *  @param[in]	channel_pfi	PFI pin which reads the pulse signal, use PFI6 for counter 0 and PFI7 for counter 1 (e.g. CH A from the encoder or CLK from the converter chip)
  *  @return		0 on success. Otherwise: error code in errno.h\n
  ***********************************************/
 int pciAnalogy::StartCNT(int subdevice, int channel_pfi)
 {
-		int ret;
-		lsampl_t counter_mode, gate_setup;	// counter setup bits
-		unsigned int data[3];	// config data
-		a4l_insn_t insn;	// instruction instance
-		unsigned initial_count = 0;
-	    encoder_t * enc = &io_board.enc[subdevice-11];
+	int ret;
+	lsampl_t counter_mode, gate_setup;	// counter setup bits
+	unsigned int data[3];	// config data
+	a4l_insn_t insn;	// instruction instance
+	unsigned initial_count = 0;
+        encoder_t * enc = &io_board.enc[subdevice-11];
 
-	    if((subdevice != SUBD_CNT) && (subdevice != SUBD_CNT_1))
-	    {
-			printf("Not a valid counter subdevice for counter function. \n");
-			return -EINVAL;
-	    }
+	if((subdevice != SUBD_CNT) && (subdevice != SUBD_CNT_1))
+	{
+		printf("Not a valid counter subdevice for counter function. \n");
+		return -EINVAL;
+	}
 
-		// reset counter
-		insn.type      = A4L_INSN_CONFIG;
-		insn.idx_subd  = subdevice;
-		insn.chan_desc = 0;
-		insn.data_size = sizeof(data[0]);
-		data[0]      = A4L_INSN_CONFIG_RESET;
-		insn.data      = data;
+	// reset counter
+	insn.type      = A4L_INSN_CONFIG;
+	insn.idx_subd  = subdevice;
+	insn.chan_desc = 0;
+	insn.data_size = sizeof(data[0]);
+	data[0]      = A4L_INSN_CONFIG_RESET;
+	insn.data      = data;
 
-		if((ret = a4l_snd_insn(&dsc, &insn))<0){
-			fprintf(stderr,"counter setup :  reset counter failed (ret=%d)\n",ret);
-			return ret;
-		}
-
-
-		//set source pulse input
-		insn.type      = A4L_INSN_CONFIG;
-		insn.idx_subd  = subdevice;
-		insn.chan_desc = 0;
-		insn.data_size = sizeof(data[0])*3;
-		data[0]      = A4L_INSN_CONFIG_SET_CLOCK_SRC;
-		data[1]      = NI_GPCT_PFI_CLOCK_SRC_BITS(channel_pfi);//NI_GPCT_TIMEBASE_3_CLOCK_SRC_BITS//e.g. defined in ni_tio.h Gi_Source_Bit in 4-63 in DAQ-STC manual 8(?) works for 0,1,2
-		data[2]		 = 0;
-		insn.data      = data;
-
-		if((ret = a4l_snd_insn(&dsc, &insn))<0){
-			fprintf(stderr,"counter setup :  set other source failed (ret=%d)\n",ret);
-			return ret;
-		}
-
-		//disable gate 1 and 2
-		gate_setup = NI_GPCT_DISABLED_GATE_SELECT;//NI_GPCT_PFI_GATE_SELECT(12)//CR_EDGE for rising edge
-
-		insn.type      = A4L_INSN_CONFIG;
-		insn.idx_subd  = subdevice;
-		insn.chan_desc = 0;
-		insn.data_size = sizeof(data[0])*3;
-		data[0]      = A4L_INSN_CONFIG_SET_GATE_SRC;
-		data[1]      = 0; //gate index (0 or 1)
-		data[2]      = gate_setup;
-		insn.data      = data;
-
-		if((ret = a4l_snd_insn(&dsc, &insn))<0){
-			fprintf(stderr,"counter setup :  set other source failed (ret=%d)\n",ret);
-			return ret;
-		}
-
-		insn.type      = A4L_INSN_CONFIG;
-		insn.idx_subd  = subdevice;
-		insn.chan_desc = 0;
-		insn.data_size = sizeof(data[0])*3;
-		data[0]      = A4L_INSN_CONFIG_SET_GATE_SRC;
-		data[1]      = 1; //gate index (0 or 1)
-		data[2]      = gate_setup;
-		insn.data      = data;
-
-		if((ret = a4l_snd_insn(&dsc, &insn))<0){
-			fprintf(stderr,"counter setup :  set other source failed (ret=%d)\n",ret);
-			return ret;
-		}
-
-		//set counter mode
-		counter_mode = NI_GPCT_COUNTING_MODE_NORMAL_BITS;
-		// count up and down determined by Up/Down signal
-		counter_mode |= NI_GPCT_COUNTING_DIRECTION_HW_UP_DOWN_BITS; //P0.6 to determine up down
-
-		//various counter mode options available in ksrc.h file
-		//below are some of the examples.
-		//			//Don't alternate the reload source between the load a and load b registers.
-		//	 		counter_mode |= NI_GPCT_RELOAD_SOURCE_FIXED_BITS;
-		//			// start and stop on gate bit == only count when gate is 1
-		//	 	  	counter_mode |= NI_GPCT_EDGE_GATE_STARTS_STOPS_BITS;
-		//	 	  	// don't disarm on terminal count or gate signal
-		//	 	  	counter_mode |= NI_GPCT_NO_HARDWARE_DISARM_BITS;
-		//	 	  	//reload at gate input
-		//	 	  	counter_mode |= NI_GPCT_LOADING_ON_GATE_BIT;
-
-
-		insn.type      = A4L_INSN_CONFIG;
-		insn.idx_subd  = subdevice;
-		insn.chan_desc = 0;
-		insn.data_size = sizeof(data[0])*2;
-		data[0]      = A4L_INSN_CONFIG_SET_COUNTER_MODE;
-		data[1]      = counter_mode;
-		insn.data      = data;
-
-		if((ret = a4l_snd_insn(&dsc, &insn))<0){
-			fprintf(stderr,"counter setup: set counter mode failed (ret=%d)\n",ret);
-			return ret;
-		}
-
-		//set initial counter to 0
-		ret = a4l_sync_write(&dsc, subdevice, 0, 0, &initial_count, sizeof(initial_count));
-		if(ret <0){
-			fprintf(stderr,"counter setup: write initial counter value as 0 (ret=%d)\n",ret);
-			return ret;
-		}
-
-		// arm the counter
-		insn.type      = A4L_INSN_CONFIG;
-		insn.idx_subd  = subdevice;
-		insn.chan_desc = 0;
-		insn.data_size = sizeof(data[0])*2;
-		data[0]      = A4L_INSN_CONFIG_ARM;
-		data[1]      = NI_GPCT_ARM_IMMEDIATE;
-		insn.data      = data;
-
-		if((ret = a4l_snd_insn(&dsc, &insn))<0){
-			fprintf(stderr,"counter setup : arm counter failed (ret=%d)\n",ret);
-			return ret;
-		}
-
-		//initialize counter
-		enc->counter_now = 0;
-
+	if((ret = a4l_snd_insn(&dsc, &insn))<0)
+	{
+		fprintf(stderr,"counter setup :  reset counter failed (ret=%d)\n",ret);
 		return ret;
+	}
+
+	//set source pulse input
+	insn.type      = A4L_INSN_CONFIG;
+	insn.idx_subd  = subdevice;
+	insn.chan_desc = 0;
+	insn.data_size = sizeof(data[0])*3;
+	data[0]      = A4L_INSN_CONFIG_SET_CLOCK_SRC;
+	data[1]      = NI_GPCT_PFI_CLOCK_SRC_BITS(channel_pfi);
+	data[2]		 = 0;
+	insn.data      = data;
+
+	if((ret = a4l_snd_insn(&dsc, &insn))<0)
+	{
+		fprintf(stderr,"counter setup :  set other source failed (ret=%d)\n",ret);
+		return ret;
+	}
+
+	//disable gate 1 and 2
+	gate_setup = NI_GPCT_DISABLED_GATE_SELECT;//NI_GPCT_PFI_GATE_SELECT(12)//CR_EDGE for rising edge
+
+	insn.type      = A4L_INSN_CONFIG;
+	insn.idx_subd  = subdevice;
+	insn.chan_desc = 0;
+	insn.data_size = sizeof(data[0])*3;
+	data[0]      = A4L_INSN_CONFIG_SET_GATE_SRC;
+	data[1]      = 0; //gate index (0 or 1)
+	data[2]      = gate_setup;
+	insn.data      = data;
+
+	if((ret = a4l_snd_insn(&dsc, &insn))<0)
+	{
+		fprintf(stderr,"counter setup :  set other source failed (ret=%d)\n",ret);
+		return ret;
+	}
+
+	insn.type      = A4L_INSN_CONFIG;
+	insn.idx_subd  = subdevice;
+	insn.chan_desc = 0;
+	insn.data_size = sizeof(data[0])*3;
+	data[0]      = A4L_INSN_CONFIG_SET_GATE_SRC;
+	data[1]      = 1; //gate index (0 or 1)
+	data[2]      = gate_setup;
+	insn.data      = data;
+
+	if((ret = a4l_snd_insn(&dsc, &insn))<0)
+	{
+		fprintf(stderr,"counter setup :  set other source failed (ret=%d)\n",ret);
+		return ret;
+	}
+
+	//set counter mode
+	counter_mode = NI_GPCT_COUNTING_MODE_NORMAL_BITS;
+	// count up and down determined by Up/Down signal
+	counter_mode |= NI_GPCT_COUNTING_DIRECTION_HW_UP_DOWN_BITS;
+
+
+	insn.type      = A4L_INSN_CONFIG;
+	insn.idx_subd  = subdevice;
+	insn.chan_desc = 0;
+	insn.data_size = sizeof(data[0])*2;
+	data[0]      = A4L_INSN_CONFIG_SET_COUNTER_MODE;
+	data[1]      = counter_mode;
+	insn.data      = data;
+
+	if((ret = a4l_snd_insn(&dsc, &insn))<0)
+	{
+		fprintf(stderr,"counter setup: set counter mode failed (ret=%d)\n",ret);
+		return ret;
+	}
+
+	//set initial counter to 0
+	ret = a4l_sync_write(&dsc, subdevice, 0, 0, &initial_count, sizeof(initial_count));
+	if(ret <0)
+	{
+		fprintf(stderr,"counter setup: write initial counter value as 0 (ret=%d)\n",ret);
+		return ret;
+	}
+
+	// arm the counter
+	insn.type      = A4L_INSN_CONFIG;
+	insn.idx_subd  = subdevice;
+	insn.chan_desc = 0;
+	insn.data_size = sizeof(data[0])*2;
+	data[0]      = A4L_INSN_CONFIG_ARM;
+	data[1]      = NI_GPCT_ARM_IMMEDIATE;
+	insn.data      = data;
+
+	if((ret = a4l_snd_insn(&dsc, &insn))<0)
+	{
+		fprintf(stderr,"counter setup : arm counter failed (ret=%d)\n",ret);
+		return ret;
+	}
+
+	//initialize counter
+	enc->counter_now = 0;
+
+	return ret;
 }
 
 /********************************************//**
@@ -660,11 +660,11 @@ int pciAnalogy::StartCNT(int subdevice, int channel_pfi)
  *
  *  The mode of encoder is defined in conf/pci6229conf.ini file.
  *
- *	@param[in]	subdevice		subdevice of counter (only SUBD_CNT or SUBD_CNT_1 for NI PCI 6221 and 6229 card)
- *	@param[in]	channel_pulse	PFI pin which reads the pulse signal, use PFI6 for counter 0 and PFI7 for counter 1 (e.g. CH A from the encoder or CLK from the converter chip)
- *	@param[out]	counter			the counter value - size of int16
- *	@param[in]	freq			the frequency of thread
- *	@param[out]	rpm				the calculated RPM value
+ *  @param[in]	subdevice	subdevice of counter (only SUBD_CNT or SUBD_CNT_1 for NI PCI 6221 and 6229 card)
+ *  @param[in]	channel_pulse	PFI pin which reads the pulse signal, use PFI6 for counter 0 and PFI7 for counter 1 (e.g. CH A from the encoder or CLK from the converter chip)
+ *  @param[out]	counter		the counter value - size of int16
+ *  @param[in]	freq		the frequency of thread
+ *  @param[out]	rpm		the calculated RPM value
  *
  *  @return 	0 on success. Otherwise: error code in errno.h\n
  ***********************************************/
@@ -672,7 +672,7 @@ int pciAnalogy::ReadCNT(int subdevice, int channel_pulse, signed &counter, int f
 {
     int ret = 0;
     int counter_num;
-    double count_rev = 0; //number of count in 1 revolution (encoder specific), 200 for our encoder
+    double count_rev = 0;
     encoder_t * enc = &io_board.enc[subdevice-11];
     signed precounter = enc->counter_now;
     int mode = cnt_conf[subdevice-11];
@@ -682,15 +682,16 @@ int pciAnalogy::ReadCNT(int subdevice, int channel_pulse, signed &counter, int f
         ret = a4l_sync_read(&dsc, subdevice, 0, 0, &counter, sizeof(counter));
         counter_num = subdevice-11;
 
-    	if ( ret < 0) {
+    	if ( ret < 0) 
+	{
             return ret;
         }
 
     }
     else
     {
-		printf("Not a valid counter subdevice for counter function. \n");
-		return -EINVAL;
+	printf("Not a valid counter subdevice for counter function. \n");
+	return -EINVAL;
     }
 
 	enc->counter_now = counter;
@@ -715,9 +716,9 @@ int pciAnalogy::ReadCNT(int subdevice, int channel_pulse, signed &counter, int f
 	rpm = (counter-precounter)*60*freq/count_rev;
 
 
-	#if DEBUG == 1
+#if DEBUG == 1
     	printf("Read counter %d: steps=%d, rpm = %g RPM\n", counter_num, counter, rpm);
-	#endif
+#endif
 
 
     return ret;
@@ -747,65 +748,67 @@ void pciAnalogy::printDeviceInfo(a4l_desc_t *dsc)
 
 
   // get information about each of the subdevices
-  for (i=1; i<=dsc->nb_subd; ++i) {
+  for (i=1; i<=dsc->nb_subd; ++i) 
+  {
+	ret = a4l_get_subdinfo(dsc,i-1,&info);
 
-	  ret = a4l_get_subdinfo(dsc,i-1,&info);
+    	if (ret < 0) 
+	{
+      		printf("ni_test: a4l_get_subdinfo (ID=%d on %s) failed (ret=%d)\n",i-1,dev_name, ret);
+        }
 
-    if (ret < 0) {
-      printf("ni_test: a4l_get_subdinfo (ID=%d on %s) failed (ret=%d)\n",i-1,dev_name, ret);
-    }
+    	printf("           Subdevice ID = %d\n",i-1);
 
-    printf("           Subdevice ID = %d\n",i-1);
+    	if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_UNUSED) 
+	{
+      		printf("             Subdevice is unused\n");
+      		printf("\n");
+      		continue;
+   	}
+    	
+	if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_AI)
+      		printf("             Subdevice is analog input\n");
+    	if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_AO)
+      		printf("             Subdevice is analog output\n");
+    	if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_DI)
+      		printf("             Subdevice is digital input\n");
+    	if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_DO)
+      		printf("             Subdevice is digital output\n");
+    	if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_DIO)
+      		printf("             Subdevice is digital input/output\n");
+    	if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_COUNTER)
+      		printf("             Subdevice is counter\n");
+    	if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_TIMER)
+      		printf("             Subdevice is timer\n");
+    	if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_MEMORY)
+      		printf("             Subdevice is memory, EEPROM, or DPRAM\n");
+    	if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_CALIB)
+     		printf("             Subdevice is calibration DAC\n");
+    	if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_PROC)
+      		printf("             Subdevice is processor or DSP\n");
+    	if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_SERIAL)
+      		printf("             Subdevice is serial I/O\n");
+    	if (info->flags & A4L_SUBD_CMD)
+     		printf("             Subdevice can handle command (asynchronous acquisition)\n");
+    	if (info->flags & A4L_SUBD_MMAP)
+      		printf("             Subdevice can do mmap operations\n");
 
-    if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_UNUSED) {
-      printf("             Subdevice is unused\n");
-      printf("\n");
-      continue;
-    }
-    if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_AI)
-      printf("             Subdevice is analog input\n");
-    if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_AO)
-      printf("             Subdevice is analog output\n");
-    if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_DI)
-      printf("             Subdevice is digital input\n");
-    if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_DO)
-      printf("             Subdevice is digital output\n");
-    if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_DIO)
-      printf("             Subdevice is digital input/output\n");
-    if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_COUNTER)
-      printf("             Subdevice is counter\n");
-    if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_TIMER)
-      printf("             Subdevice is timer\n");
-    if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_MEMORY)
-      printf("             Subdevice is memory, EEPROM, or DPRAM\n");
-    if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_CALIB)
-      printf("             Subdevice is calibration DAC\n");
-    if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_PROC)
-      printf("             Subdevice is processor or DSP\n");
-    if ((info->flags&A4L_SUBD_TYPES) == A4L_SUBD_SERIAL)
-      printf("             Subdevice is serial I/O\n");
-    if (info->flags & A4L_SUBD_CMD)
-      printf("             Subdevice can handle command (asynchronous acquisition)\n");
-    if (info->flags & A4L_SUBD_MMAP)
-      printf("             Subdevice can do mmap operations\n");
-
-    printf("             Status               %ld\n",info->status);
-    printf("             Number of Channels   %d\n",info->nb_chan);
+    	printf("             Status               %ld\n",info->status);
+    	printf("             Number of Channels   %d\n",info->nb_chan);
 
 
-    // get channel information
-    for (j=1; j<=info->nb_chan; ++j) {
-      a4l_chinfo_t *chan_info;
+    	// get channel information
+    	for (j=1; j<=info->nb_chan; ++j) 
+	{
+      		a4l_chinfo_t *chan_info;
+      		ret = a4l_get_chinfo(dsc,i-1,j-1,&chan_info);
+      		if (ret < 0) 
+		{
+    		    printf("a4l_get_chinfo failed (ret=%d)\n", ret);
+      		}
 
-      ret = a4l_get_chinfo(dsc,i-1,j-1,&chan_info);
-      if (ret < 0) {
-        printf("a4l_get_chinfo failed (ret=%d)\n", ret);
-      }
-
-      printf("                 %2d.Channel: #Bits = %d  #Ranges = %d  Flags = 0x%lx\n",
-	     j-1,chan_info->nb_bits,
-	     chan_info->nb_rng,chan_info->chan_flags);
-    }
+	        printf("%2d.Channel: #Bits = %d  #Ranges = %d  Flags = 0x%lx\n", j-1,chan_info->nb_bits, chan_info->nb_rng,chan_info->chan_flags);
+    	}
 
     printf("\n");
 
@@ -820,9 +823,9 @@ void pciAnalogy::printDeviceInfo(a4l_desc_t *dsc)
  *	Only the conversion part of the code has been modified to convert \n
  *	rawdata into voltage value using the calibration coefficient in the third order polynomial equation.
  *
- *	@param[in] 	ch		Channel
+ *  @param[in] 	ch	Channel
  *  @param[in] 	chan 	Channel descript
- *  @param[in] 	rng		Range descriptor
+ *  @param[in] 	rng	Range descriptor
  *  @param[out] dst 	Voltage value
  *  @param[in] 	src 	Rawdata acquired by ADC
  *  @return 	0 on success. Otherwise: error code in errno.h\n

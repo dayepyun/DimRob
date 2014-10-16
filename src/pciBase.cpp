@@ -6,7 +6,6 @@
  *	-Configuring the digital channels to input or output.\n
  *	-Resetting analog output and digital output to 0 are implemented.\n
  *
- *  @author HyQ
  *  @author R. Pyun
  *
  */
@@ -74,7 +73,7 @@ void pciBase::read_config(const char * conf)
         return;
     }
     else {
-//        printf( "parse file: %s\n", conf);
+        printf( "parse file: %s\n", conf);
     }
     iniparser_dump(ini, stderr);
 
@@ -83,8 +82,7 @@ void pciBase::read_config(const char * conf)
         dev_name = strdup(str_value);
     }
 
-//    sprintf(str_key, "pci_conf:daq_model");
-//    io_board.board_id = iniparser_getint(ini, str_key, 0);
+    sprintf(str_key, "pci_conf:daq_model");
 
     // store configuration for DIO groups into dio_grp_conf[] array
     for (i = 0; i<DGR_NUM; i++) {
@@ -144,7 +142,7 @@ void pciBase::read_config(const char * conf)
  *
  *	Configure the digital pins to input or output based on the user-defined configuration in the configuration file, pci6229conf.ini.
  *
- *	@param		void
+ *  @param	void
  *  @return 	void
  ***********************************************/
 void pciBase::Conf_cnt_dio(void)
@@ -177,29 +175,26 @@ void pciBase::Reset_IO()
     }
 
     // Reset digital outputs (pin: P0.x)
-	for(int c = 0; c<(DIO_NUM-PFI_NUM); c++)
-	{
+    for(int c = 0; c<(DIO_NUM-PFI_NUM); c++)
+    {
     	dio =  &io_board.dio;
-		mask = 0x0001 << c;
-		if(((dio->dio_conf) & mask ) != 0)//if the channel is digital output
-		{
-			WriteDO(SUBD_DIO,c,value);
-
-		}
-
-	}
-
-	 // Reset digital outputs (pin: P1.x and P2.x)
-	for(int c = 0; c<PFI_NUM; c++)
+	mask = 0x0001 << c;
+	if(((dio->dio_conf) & mask ) != 0)//if the channel is digital output
 	{
-    	dio =  &io_board.dio_f;
-		mask = 0x0001 << c;
-		if(((dio->dio_conf) & mask ) != 0)//if the channel is digital output
-		{
-			WriteDO(SUBD_DIO_F,c,value);
-		}
+		WriteDO(SUBD_DIO,c,value);
+	}
+    }
 
+    // Reset digital outputs (pin: P1.x and P2.x)
+    for(int c = 0; c<PFI_NUM; c++)
+    {
+	dio =  &io_board.dio_f;
+	mask = 0x0001 << c;
+	if(((dio->dio_conf) & mask ) != 0)//if the channel is digital output
+	{
+		WriteDO(SUBD_DIO_F,c,value);
 	}
 
+    }
 
 }

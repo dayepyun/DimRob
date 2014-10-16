@@ -1,13 +1,13 @@
 /** @file stateMachine.cpp
  *  @brief Finite State Machine (FSM) implementations
  *
- *	@date	02.06.2014
+ *  @date	02.06.2014
  *  @author R. Pyun
  *
  */
 
 #include <iostream>
-#include <array>
+#include <list>
 
 #include "stateMachine.h"
 #include "math.h"
@@ -33,7 +33,7 @@ stateMachine::~stateMachine(void)
  *	The state machine is initiated as Idle state. \n
  *	The counter to process encoder data for the motor is initialized.
  *
- *	@param[in] pb	pciBase class
+ * @param[in] pb	pciBase class
  *  @return 		0 on success. Otherwise: error code in errno.h\n
  ***********************************************/
 int stateMachine::InitFSM(pciBase * pciBoard)
@@ -78,99 +78,61 @@ int stateMachine::InitFSM(pciBase * pciBoard)
  *
  *  Read all sensor readings and convert them in prorper unit. (otherwise, in voltage)
  *
- *  @param[in] pciBoard	pciBase class
- *  @return 		0 on success. Otherwise: error code in errno.h\n
+ *  @param[in] 	pciBoard	pciBase class
+ *  @return 	0 on success. Otherwise: error code in errno.h\n
  *
  ***********************************************/
 int stateMachine::ReadSensors(pciBase * pciBoard)
 {
 	int err = 0;
 
-//	array<int,11> aiList = {AI_TEMP_SCB, AI_TEMP_MOT, AI_VOLT_BAT, AI_PRES_OIL_1, AI_PRES_OIL_4,AI_PRES_OIL_5,AI_PRES_OIL,AI_FLOW_OIL,AI_TEMP_OIL,AI_PRES_OIL_3,AI_PRES_OIL_2};
-//	array<double,11> *aiValueList;
-//	aiValueList = {&val_temp_scb, &val_temp_mot, &val_volt_bat, &val_pres_oil_1, &val_pres_oil_4, &val_pres_oil_5, &val_pres_oil, &val_flow_oil, &val_temp_oil, &val_pres_oil_3, &val_pres_oil_2};
-//
-////	double *aiValueList [1];
-////	aiValueList [0]= {&val_temp_scb};
-//	array<unsigned short,11> aiRawList = {raw_temp_scb, raw_temp_mot, raw_volt_bat, raw_pres_oil_1, raw_pres_oil_4,raw_pres_oil_5,raw_pres_oil,raw_flow_oil,raw_temp_oil,raw_pres_oil_3,raw_pres_oil_2};
-//
-//	array<int,2> subd_dioList = {SUBD_DIO, SUBD_DIO_F};
-//	array<int,5> diList = {DI_CHAR_SIG, DI_CHAR_PWR, DI_ESTOP_HW, DIF_MANUAL, DIF_AUTO};
-//	array<bool,5> diStateList = {chargerEnabled, chargerPowered, hwEstopOpened, manualModeEnabled, autoModeEnabled};
-//
-//	//read sensor value (AI)
-//	for (int i = 0; i < aiList.size(); i++)
-//	{
-//
-//		if ((err = pciBoard->ReadAD(aiList[i], *aiValueList[i], aiRawList[i])) < 0)
-//		{
-//			return err;
-//		}
-//	}
-//
-//	//read sensor value (DI)
-//	for (int j = 0; j < diList.size(); j++)
-//	{
-//		// to get the appropriate index of the subd_dioList
-//		int subd_dio = j < 3 ? 0 : 1;
-//
-//		if ((err = pciBoard->ReadDI(subd_dioList[subd_dio],diList[j], diStateList[j])) < 0)
-//		{
-//			return err;
-//		}
-//	}
-//
-//
-//	val_temp_scb = val_temp_scb*100;
-//	//val_temp_mot = ??? //todo tempMotor conversion from voltage to °C
-//	//val_volt_bat = val_volt_bat*6;//todo wrong conversion
-//	val_pres_oil_1 = (val_pres_oil_1-0.5)*62.5;
-//	val_pres_oil_4 = (val_pres_oil_4-0.5)*62.5;
-//	val_pres_oil_5 = (val_pres_oil_5-0.5)*62.5;
-//	val_pres_oil = val_pres_oil*40;
-//	val_flow_oil = (val_flow_oil-0.928)*60/3.712;
-//	val_temp_oil = (val_temp_oil*175/4.64)-50;
-//	val_pres_oil_3 = (val_pres_oil_3-0.5)*62.5;
-//	val_pres_oil_2 = (val_pres_oil_2-0.5)*62.5;
-//
-//	err = pciBoard->ReadCNT(SUBD_CNT, DIF_ENC_CLK, encoderCount, freqLoop, motorRPMnow);
-//
-//	return err;
+	array<int,11> aiList = {AI_TEMP_SCB, AI_TEMP_MOT, AI_VOLT_BAT, AI_PRES_OIL_1, AI_PRES_OIL_4,AI_PRES_OIL_5,AI_PRES_OIL,AI_FLOW_OIL,AI_TEMP_OIL,AI_PRES_OIL_3,AI_PRES_OIL_2};
+	array<double,11> aiValueList = {&val_temp_scb, &val_temp_mot, &val_volt_bat, &val_pres_oil_1, &val_pres_oil_4, &val_pres_oil_5, &val_pres_oil, &val_flow_oil, &val_temp_oil, &val_pres_oil_3, &val_pres_oil_2};
+	array<unsigned short,11> aiRawList = {raw_temp_scb, raw_temp_mot, raw_volt_bat, raw_pres_oil_1, raw_pres_oil_4,raw_pres_oil_5,raw_pres_oil,raw_flow_oil,raw_temp_oil,raw_pres_oil_3,raw_pres_oil_2};
 
-		//read sensor value
-		err = pciBoard->ReadAD(AI_TEMP_SCB, val_temp_scb, raw_temp_scb);
-		err = pciBoard->ReadAD(AI_TEMP_MOT, val_temp_mot, raw_temp_mot);
-		err = pciBoard->ReadAD(AI_VOLT_BAT, val_volt_bat, raw_volt_bat);
-		err = pciBoard->ReadAD(AI_PRES_OIL_1, val_pres_oil_1, raw_pres_oil_1);
-		err = pciBoard->ReadAD(AI_PRES_OIL_4, val_pres_oil_4, raw_pres_oil_4);
-		err = pciBoard->ReadAD(AI_PRES_OIL_5, val_pres_oil_5, raw_pres_oil_5);
-		err = pciBoard->ReadAD(AI_PRES_OIL, val_pres_oil, raw_pres_oil);
-		err = pciBoard->ReadAD(AI_FLOW_OIL, val_flow_oil, raw_flow_oil);
-		err = pciBoard->ReadAD(AI_TEMP_OIL, val_temp_oil, raw_temp_oil);
-		err = pciBoard->ReadAD(AI_PRES_OIL_3, val_pres_oil_3, raw_pres_oil_3);
-		err = pciBoard->ReadAD(AI_PRES_OIL_2, val_pres_oil_2, raw_pres_oil_2);
+	array<int,2> subd_dioList = {SUBD_DIO, SUBD_DIO_F};
+	array<int,5> diList = {DI_CHAR_SIG, DI_CHAR_PWR, DI_ESTOP_HW, DIF_MANUAL, DIF_AUTO};
+	array<bool,5> diStateList = {chargerEnabled, chargerPowered, hwEstopOpened, manualModeEnabled, autoModeEnabled};
 
-		val_temp_scb = val_temp_scb*100;
-		//val_temp_mot = ??? //todo tempMotor conversion from voltage to °C
-		//val_volt_bat = val_volt_bat*6;//todo wrong conversion
-		val_pres_oil_1 = (val_pres_oil_1-0.5)*62.5;
-		val_pres_oil_4 = (val_pres_oil_4-0.5)*62.5;
-		val_pres_oil_5 = (val_pres_oil_5-0.5)*62.5;
-		val_pres_oil = val_pres_oil*40;
-		val_flow_oil = (val_flow_oil-0.928)*60/3.712;
-		val_temp_oil = (val_temp_oil*175/4.64)-50;
-		val_pres_oil_3 = (val_pres_oil_3-0.5)*62.5;
-		val_pres_oil_2 = (val_pres_oil_2-0.5)*62.5;
+	//read sensor value (AI)
+	for (int i = 0; i < aiList.size(); i++)
+	{
 
-		err = pciBoard->ReadDI(SUBD_DIO,DI_CHAR_SIG, chargerEnabled);
-		err = pciBoard->ReadDI(SUBD_DIO,DI_CHAR_PWR, chargerPowered);
-		err = pciBoard->ReadDI(SUBD_DIO,DI_ESTOP_HW, hwEstopOpened);
-		err = pciBoard->ReadDI(SUBD_DIO_F,DIF_MANUAL, manualModeEnabled);
-		err = pciBoard->ReadDI(SUBD_DIO_F,DIF_AUTO, autoModeEnabled);
-		err = pciBoard->ReadCNT(SUBD_CNT, DIF_ENC_CLK, encoderCount, freqLoop, motorRPMnow);
+		if ((err = pciBoard->ReadAD(aiList[i], aiValueList[i], aiRawList[i])) < 0)
+		{
+			return err;
+		}
+	}
+
+	//read sensor value (DI)
+	for (int j = 0; j < diList.size(); j++)
+	{
+		// to get the appropriate index of the subd_dioList
+		int subd_dio = j < 3 ? 0 : 1;
+
+		if ((err = pciBoard->ReadDI(subd_dioList[subd_dio],diList[j], diStateList[j])) < 0)
+		{
+			return err;
+		}
+	}
 
 
-		return err;
+	val_temp_scb = val_temp_scb*100;
+	val_temp_mot = val_temp_mot*10;
+	val_volt_bat = val_volt_bat*6;
+	val_pres_oil_1 = (val_pres_oil_1-0.5)*62.5;
+	val_pres_oil_4 = (val_pres_oil_4-0.5)*62.5;
+	val_pres_oil_5 = (val_pres_oil_5-0.5)*62.5;
+	val_pres_oil = val_pres_oil*40;
+	val_flow_oil = (val_flow_oil-0.928)*60/3.712;
+	val_temp_oil = (val_temp_oil*175/4.64)-50;
+	val_pres_oil_3 = (val_pres_oil_3-0.5)*62.5;
+	val_pres_oil_2 = (val_pres_oil_2-0.5)*62.5;
+
+	err = pciBoard->ReadCNT(SUBD_CNT, DIF_ENC_CLK, encoderCount, freqLoop, motorRPMnow);
+
+	return err;
+
 }
 
 /********************************************//**
@@ -184,9 +146,7 @@ int stateMachine::ReadSensors(pciBase * pciBoard)
  ***********************************************/
 void stateMachine::CheckErrCondition()
 {
-	//todo implement error condition check algorithm
-
-	errCondDetected = false;
+	errCondDetected = true;
 
 	//check if everything is in good condition (i.e. no error), then set errCondDetected to false.
 	if(motorCmd >= 0) //motor command is positive
@@ -243,7 +203,7 @@ void stateMachine::CheckErrCondition()
  *
  *  		a. Mode Valve:	  	Center
  *  		b. Speed Valve:		Off
- *  		c. MOOGs:			Center - 0 for CH_FVAL_L and CH_FVAL_R
+ *  		c. MOOGs:		Center - 0 for CH_FVAL_L and CH_FVAL_R
  *  		d. Motor Command:	Off - done in hardware - disable MicroScript
  *  		e. Other outputs:	Off - Cooler and Signal light
  *
@@ -323,9 +283,9 @@ int stateMachine::SetIdleState(pciBase * pciBoard)
  *
  *   	a. Mode Valve:	  	Center
  *  	b. Speed Valve:		Off
- *  	c. MOOGs:			Center
+ *  	c. MOOGs:		Center
  *  	d. Motor Command:	0
- *		e. Other outputs: 	Off - Cooler and Signal light
+ *	e. Other outputs: 	Off - Cooler and Signal light
  *
  *  @param[in] pciBoard	pciBase class
  *  @return 		0 on success. Otherwise: error code in errno.h\n
@@ -399,11 +359,11 @@ int stateMachine::SetErrorState(pciBase * pciBoard)
  *
  *   	a. Mode Valve:	  	Passive (Center command)
  *  	b. Speed Valve:		Off
- *  	c. MOOGs:			Center
+ *  	c. MOOGs:		Center
  *  	d. Motor Command:	0 -MicroScript - constant motor command (disable the motor command from serial communication)
  *
- *	@param[in] pciBoard	pciBase class
- *  @return 		0 on success. Otherwise: error code in errno.h\n
+ * @param[in] pciBoard	pciBase class
+ * @return 		0 on success. Otherwise: error code in errno.h\n
  ***********************************************/
 int stateMachine::SetManualState(pciBase * pciBoard)
 {
@@ -440,7 +400,7 @@ int stateMachine::SetManualState(pciBase * pciBoard)
 	}
 
 	//d. Motor Command:	MicroScript - constant motor command (disable the motor command from serial communication)
-	motorCmd = 0; // not used in manual mode
+	motorCmd = 0;
 
 	nowState = STATE_MANUAL;
 
@@ -460,7 +420,7 @@ int stateMachine::SetManualState(pciBase * pciBoard)
  *
  *   	a. Mode Valve:	  	Left
  *  	b. Speed Valve:		Modulated vs. Speed command (but, for SetAutoState, the valve is set to 0)
- *  	c. MOOGs:			Selectable (but, for SetAutoState, the valves are set to 0)
+ *  	c. MOOGs:		Selectable (but, for SetAutoState, the valves are set to 0)
  *  	d. Motor Command:	Serial communication - Modulated vs. Supply Pressure (but, for SetAutoState, the motor command is set to 0)
  *
  *  @param[in] pciBoard	pciBase class
@@ -528,7 +488,7 @@ int stateMachine::SetAutoState(pciBase * pciBoard)
  *
  *   	a. Mode Valve:	  	Left
  *  	b. Speed Valve:		Selectable
- *  	c. MOOGs:			Selectable
+ *  	c. MOOGs:		Selectable
  *  	d. Motor Command:	Open-loop control
  *
  *  @param[in] pciBoard	pciBase class

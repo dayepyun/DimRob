@@ -32,11 +32,6 @@
  *  This changes the device specific information including the calibration coefficient (defined in pciAnalogy.cpp) for analog signal.
  *  (i.e. ADC_NUM, DAC_NUM, CNT_NUM....DCH_NUM)
  ***********************************************/
-//#define DEVICE 6221				///<Define DAQ device model number (i.e. 6221 or 6229)
-#define DEVICE 6229				///<Define DAQ device model number (i.e. 6221 or 6229)
-
-//Device specific information
-#if DEVICE == 6229
 //PCI 6229
 #define ADC_NUM             32	///<number of analog input channel
 #define DAC_NUM             4	///<number of analog output channel
@@ -51,16 +46,16 @@
 /********************************************************/
 //List of Channels
 //AI
-#define AI_TEMP_SCB		0 	///< AI 0: NI SCB 68A on-board Temperature Sensor
-#define AI_TEMP_MOT		1 	///< AI 1: Motor Temperature Sensor
-#define AI_VOLT_BAT		2 	///< AI 2: Battery Voltage Sensor
+#define AI_TEMP_SCB	0 	///< AI 0: NI SCB 68A on-board Temperature Sensor
+#define AI_TEMP_MOT	1 	///< AI 1: Motor Temperature Sensor
+#define AI_VOLT_BAT	2 	///< AI 2: Battery Voltage Sensor
 
 #define AI_PRES_OIL_1	16 	///< AI 16: Rexroth Oil Pressure Sensor 1
 #define AI_PRES_OIL_4	17 	///< AI 17: Rexroth Oil Pressure Sensor 4
 #define AI_PRES_OIL_5	18 	///< AI 18: Rexroth Oil Pressure Sensor 5
-#define AI_PRES_OIL		19 	///< AI 19: Parker Oil Pressure Sensor
-#define AI_FLOW_OIL		20 	///< AI 20: Parker Oil Flow Sensor
-#define AI_TEMP_OIL		21 	///< AI 21: Parker Oil Temperature Sensor
+#define AI_PRES_OIL	19 	///< AI 19: Parker Oil Pressure Sensor
+#define AI_FLOW_OIL	20 	///< AI 20: Parker Oil Flow Sensor
+#define AI_TEMP_OIL	21 	///< AI 21: Parker Oil Temperature Sensor
 #define AI_PRES_OIL_3	22 	///< AI 22: Rexroth Oil Pressure Sensor 3
 #define AI_PRES_OIL_2	23 	///< AI 23: Rexroth Oil Pressure Sensor 2
 
@@ -69,85 +64,24 @@
 #define AO_FLOW_VAL_R	3 	///< AO 3: MOOGs Flow Control Valve (Left track)
 
 //DIO
-#define DO_ESTOP_SW		0	///< DO 0.0: Enable Soft E-Stop / Disable "
-#define DO_COOLER		1	///< DO 0.1: Enable Cooler / Disable "
-#define DO_ENC_MODE		2 	///< DO 0.2: Enable Encoder Mode x4 / Enable x1
-#define DO_LIGHT		3 	///< DO 0.3: Enable Signal Light / Disable "
+#define DO_ESTOP_SW	0	///< DO 0.0: Enable Soft E-Stop / Disable "
+#define DO_COOLER	1	///< DO 0.1: Enable Cooler / Disable "
+#define DO_ENC_MODE	2 	///< DO 0.2: Enable Encoder Mode x4 / Enable x1
+#define DO_LIGHT	3 	///< DO 0.3: Enable Signal Light / Disable "
 
-#define DI_CHAR_SIG		4	///< DI P0.4: Charger Enabled / Charger Disabled (Charger fully charged)
+#define DI_CHAR_SIG	4	///< DI P0.4: Charger Enabled / Charger Disabled (Charger fully charged)
 #define DI_CHAR_PWR 	5	///< DI P0.5: Charger Powered / Charger Off
-#define DI_ENC_DIR		6 	///< DI P0.6: Encoder Up / Encoder Down **Channel cannot be changed.
-#define DI_ESTOP_HW		7 	///< DI P0.7: E-Stop Not Pressed / E-Stop Pressed
+#define DI_ENC_DIR	6 	///< DI P0.6: Encoder Up / Encoder Down **Channel cannot be changed.
+#define DI_ESTOP_HW	7 	///< DI P0.7: E-Stop Not Pressed / E-Stop Pressed
 
 #define DO_SPEED_VAL	18	///< DO P0.18: Enable High Speed Mode / Enable Low Speed Mode
-#define DO_MODE_VAL		19	///< DO P0.19: Enable Auto Mode Valve / Disable Auto Mode Valve (Neutral Status)
+#define DO_MODE_VAL	19	///< DO P0.19: Enable Auto Mode Valve / Disable Auto Mode Valve (Neutral Status)
 
 //DIO (PFI)
-#define DIF_MANUAL		4 	///< DI PFI 4: Manual Mode Enabled (Toggle switch) / Manual Mode Disabled
-#define DIF_ENC_IND		5 	///< DI PFI 5: Encoder Index Pulse (1 per revolution)
-#define DIF_ENC_CLK		6 	///< DI PFI 6: Encoder Pulses
-#define DIF_AUTO		7 	///< DI PFI 7: Auto Mode Enabled (Toggle switch) / Auto Mode Disabled
-
-
-
-#elif DEVICE == 6221
-//PCI 6221
-#define ADC_NUM             16	///<number of analog input channel
-#define DAC_NUM             2	///<number of analog output channel
-#define CNT_NUM             2	///<number of counter channel
-#define PWM_NUM             2	///<number of PWM channel
-#define ENC_NUM             2	///<number of encoder channel
-#define DIO_NUM             24	///<number of all digital channel (i.e. P0.x, P1.x and P2.x pins)
-#define PFI_NUM             16	///<number of PFI channel (i.e. P1.x and P2.x pins)
-#define DGR_NUM             6	///<number of digital input output group: defined in "config" folder
-#define DCH_NUM             4	///<number of digital channel in each group
-
-/********************************************************/
-//List of Channels (for testing with PCI6221)
-//AI
-#define AI_TEMP_SCB		0 	///< AI 0: NI SCB 68A on-board Temperature Sensor
-#define AI_TEMP_MOT		1 	///< AI 1: Motor Temperature Sensor
-#define AI_VOLT_BAT		2 	///< AI 2: Battery Voltage Sensor
-
-#define AI_PRES_OIL_1	3 	///< AI 16: Rexroth Oil Pressure Sensor 1
-#define AI_PRES_OIL_4	4 	///< AI 17: Rexroth Oil Pressure Sensor 4
-#define AI_PRES_OIL_5	5 	///< AI 18: Rexroth Oil Pressure Sensor 5
-#define AI_PRES_OIL		6 	///< AI 19: Parker Oil Pressure Sensor
-#define AI_FLOW_OIL		7 	///< AI 20: Parker Oil Flow Sensor
-#define AI_TEMP_OIL		8 	///< AI 21: Parker Oil Temperature Sensor
-#define AI_PRES_OIL_3	9 	///< AI 22: Rexroth Oil Pressure Sensor 3
-#define AI_PRES_OIL_2	10 	///< AI 23: Rexroth Oil Pressure Sensor 2
-
-//AO
-#define AO_FLOW_VAL_L	0 	///< AO 0: MOOGs Flow Control Valve (Left track)
-#define AO_FLOW_VAL_R	1 	///< AO 1: MOOGs Flow Control Valve (Left track)
-
-//DIO
-#define DO_ESTOP_SW		0	///< DO 0.0: Enable Soft E-Stop / Disable "
-#define DO_COOLER		1	///< DO 0.1: Enable Cooler / Disable "
-#define DO_ENC_MODE		2 	///< DO 0.2: Enable Encoder Mode x4 / Enable x1
-#define DO_LIGHT		3 	///< DO 0.3: Enable Signal Light / Disable "
-
-#define DI_CHAR_SIG		4	///< DI P0.4: Charger Enabled / Charger Disabled (Charger fully charged)
-#define DI_CHAR_PWR 	5	///< DI P0.5: Charger Powered / Charger Off
-#define DI_ENC_DIR		6 	///< DI P0.6: Encoder Up / Encoder Down **Channel cannot be changed.
-#define DI_ESTOP_HW		7 	///< DI P0.7: E-Stop Not Pressed / E-Stop Pressed
-
-//DIO (PFI)
-#define DO_SPEED_VAL	0	///< DO P0.18: Enable High Speed Mode / Enable Low Speed Mode
-#define DO_MODE_VAL		1	///< DO P0.19: Enable Auto Mode Valve / Disable Auto Mode Valve (Neutral Status)
-
-
-#define DIF_MANUAL		4 	///< DI PFI 4: Manual Mode Enabled (Toggle switch) / Manual Mode Disabled
-#define DIF_ENC_IND		5 	///< DI PFI 5: Encoder Index Pulse (1 per revolution)
-#define DIF_ENC_CLK		6 	///< DI PFI 6: Encoder Pulses
-#define DIF_AUTO		7 	///< DI PFI 7: Auto Mode Enabled (Toggle switch) / Auto Mode Disabled
-#endif
-
-
-
-
-
+#define DIF_MANUAL	4 	///< DI PFI 4: Manual Mode Enabled (Toggle switch) / Manual Mode Disabled
+#define DIF_ENC_IND	5 	///< DI PFI 5: Encoder Index Pulse (1 per revolution)
+#define DIF_ENC_CLK	6 	///< DI PFI 6: Encoder Pulses
+#define DIF_AUTO	7 	///< DI PFI 7: Auto Mode Enabled (Toggle switch) / Auto Mode Disabled
 
 /********************************************************/
 
@@ -263,8 +197,8 @@ public:
     virtual int     WriteDO(int subdevice, int channel, bool &value) = 0;
 
     // Counters:
-    virtual int 	StartCNT(int subdevice, int channel_pfi) = 0;
-    virtual int 	ReadCNT(int subdevice, int channel_pulse, signed &counter, int freq, double &rpm) = 0;
+    virtual int     StartCNT(int subdevice, int channel_pfi) = 0;
+    virtual int     ReadCNT(int subdevice, int channel_pulse, signed &counter, int freq, double &rpm) = 0;
 
     // etc...
     void Conf_cnt_dio(void);
@@ -272,7 +206,7 @@ public:
 
     bool boardIsOpen;			///<status of board: set to TRUE when the loading procedure of the device is completed
 
-    ai_t    ai_conf[ADC_NUM];	///<an array to store the configuration data for AI configuration
+    ai_t    ai_conf[ADC_NUM];		///<an array to store the configuration data for AI configuration
     dio_t   dio_grp_conf[DGR_NUM];	///<an array to store the configuration data for DIO groups
     cnt_t   cnt_conf[CNT_NUM];		///<an array to store the configuration data for counters
 

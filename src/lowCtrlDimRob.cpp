@@ -2,18 +2,18 @@
  *  @brief DimRob LC application code
  *
  *  !!make sure to have the following path, ini_name[] = "src/xeno_interface/src/config/conf.ini", in configure_board() function.\n
- *	!!also "src/xeno_interface/src/config/pci6229conf.ini" as a filename inside the conf.ini file.\n
+ *  !!also "src/xeno_interface/src/config/pci6229conf.ini" as a filename inside the conf.ini file.\n
  *
  *  This is the application code for the low-level control of hydraulic system for DimRob.\n
- *	Xenomai and ROS publisher are integrated in one file.\n
+ *  Xenomai and ROS publisher are integrated in one file.\n
  *
  *
- *	Two real-time tasks with different priorities are initiated.\n
- *	The task with high priority is a serving as a real-time task for our system.\n
- *	The non-real task is implemented with a real-time task with low priority in order to use mutex function in native API.\n
- *	We simply ignore mode switches in the real-time task with low priority, a non-real time task for our system.\n
+ *  Two real-time tasks with different priorities are initiated.\n
+ *  The task with high priority is a serving as a real-time task for our system.\n
+ *  The non-real task is implemented with a real-time task with low priority in order to use mutex function in native API.\n
+ *  We simply ignore mode switches in the real-time task with low priority, a non-real time task for our system.\n
  *
- *	Mutex system is implemented with time flag to prevent accessing the global variables by two tasks at the same time.\n
+ *  Mutex system is implemented with time flag to prevent accessing the global variables by two tasks at the same time.\n
  *  If the real-time thread with high priority cannot acquire the mutex in 1/10 of its frequency, the timeout message is printed.\n
  *
  *
@@ -23,9 +23,9 @@
  *  -Send actuator outputs\n
  *  -Desired motor command is passed to non-real time loop.\n
  *
- *	2. task_nrt (low priority):\n
- *	-Acquire the sensors inputs and the actuators outputs from RT thread and publish the data\n
- *	-Send the desired motor command to the motor controller\n
+ *  2. task_nrt (low priority):\n
+ *  -Acquire the sensors inputs and the actuators outputs from RT thread and publish the data\n
+ *  -Send the desired motor command to the motor controller\n
  *
  *
  *  Four state machine status
@@ -37,9 +37,9 @@
  *  		-Check error condition and E-stop status -> Error State
  *  			1. Mode Valve:	  	Center
  *  			2. Speed Valve:		Off
- *  			3. MOOGs:			Center
+ *  			3. MOOGs:		Center
  *  			4. Motor Command:	Off
- *				5. Other outputs:	Off - Cooler and Signal light
+ *			5. Other outputs:	Off - Cooler and Signal light
  *
  *  2.	Error:\n
  *
@@ -47,9 +47,9 @@
  *  		-Exit the loop when error is removed AND E-stop is not pressed
  *  			1. Mode Valve:	  	Center
  *  			2. Speed Valve:		Off
- *  			3. MOOGs:			Center
+ *  			3. MOOGs:		Center
  *  			4. Motor Command:	0
- *				5. Other outputs:	Off - Cooler and Signal light
+ *			5. Other outputs:	Off - Cooler and Signal light
  *
  *  3.	Manual mode:\n
  *
@@ -58,7 +58,7 @@
  *			-Exit to Error loop in case of error is detected or E-stop is pressed
  *   			1. Mode Valve:	  	Passive (Center command)
  *  			2. Speed Valve:		Off
- *  			3. MOOGs:			Center
+ *  			3. MOOGs:		Center
  *  			4. Motor Command:	MicroScript - constant motor command (disable the motor command from serial communication)
  *
  *  4.	Auto mode:\n
@@ -68,7 +68,7 @@
  *			-Exit to Error loop in case of error is detected or E-stop is pressed
  *   			1. Mode Valve:	  	Left
  *  			2. Speed Valve:		Modulated vs. Speed command
- *  			3. MOOGs:			Selectable
+ *  			3. MOOGs:		Selectable
  *  			4. Motor Command:	Serial communication - Modulated vs. Supply Pressure
  *
  *  5.	Test mode:\n
@@ -76,47 +76,43 @@
  *			- Enter the loop from Idle loop when toggle switch is set to Auto mode and Test mode is enabled
  *			- Exit to Idle loop if toggle switch status is not Auto mode OR Test mode is disabled
  *			- Exit to Error loop in case of error is detected or E-stop is pressed
- *			   	1. Mode Valve:	  	Left
+ *			1. Mode Valve:	  	Left
  *  			2. Speed Valve:		selectable
- *  			3. MOOGs:			Selectable
+ *  			3. MOOGs:		Selectable
  *  			4. Motor Command:	Open-loop control
  *
  *
- *  @todo  speed valve control algorithm in auto mode
- *  @todo  motor RPM algorithm (e.g. PID control) for auto mode
- *  @todo  real-time ROS tool (RT ROS publisher)
- *
- *	@date	18.06.2014
  *  @author R. Pyun
  */
 
-#include "ros/ros.h"
-#include "std_msgs/String.h"
 #include <sstream>
 #include <memory>
-
-#include "iniparser.h"
-#include "controlUtils.h"
 
 #include <signal.h>
 #include <fcntl.h>
 #include <termios.h>
-
-#include "RoboteqDevice.h"
-#include "ErrorCodes.h"
-#include "Constants.h"
 
 /*Real-time related headers*/
 #include <native/task.h>
 #include <native/timer.h>
 #include <native/mutex.h>
 #include <sys/mman.h>
-#include <rtdk.h> //Required for rt_printf (Real-time console print-out)
-#include <execinfo.h> //for backtrace
+#include <rtdk.h> 	//Required for rt_printf (Real-time console print-out)
+#include <execinfo.h> 	//for backtrace
 
+
+#include "iniparser.h"
+#include "controlUtils.h"
 #include "stateMachine.h"
+
+#include "ros/ros.h"
+#include "std_msgs/String.h"
 #include "xeno_interface/Dimrob.h"
 #include "realtime_subscriber/RealtimeSubscriber.hpp"
+
+#include "RoboteqDevice.h"
+#include "ErrorCodes.h"
+#include "Constants.h"
 
 /********************************************************/
 //MODIFY TO TEST IN DESIRED FREQUENCY
@@ -126,48 +122,48 @@
 #define IDLE_TIME_MS 3000	///< fixed minimum duration for idle state in ms
 /********************************************************/
 #define MAX_MOTOR 250 		///< maximum motor command
-#define MOTOR_CMD_RATE	500 ///< motor command increment or decrement rate (MOTOR_CMD_RATE per second)
+#define MOTOR_CMD_RATE	500 	///< motor command increment or decrement rate (MOTOR_CMD_RATE per second)
 /********************************************************/
 #define MAX_DAQ_BOARD 1 	///< maximum number of DAQ board (use 1 DAQ board for the current system)
 
 RT_TASK demo_task_rt;		///<declaration of a real-time task (for high priority task)
 RT_TASK demo_task_nrt;		///<declaration of a real-time task (for low priority task)
-RT_MUTEX mutexPub;			///<declaration of a mutex for ROS publisher
+RT_MUTEX mutexPub;		///<declaration of a mutex for ROS publisher
 
 pciBase     * pciboards[MAX_DAQ_BOARD]; ///< pciBase class initialized
-int pci_board_num = 0; 					///< number of DAQ board, the value is changed during the configuration
+int pci_board_num = 0; 			///< number of DAQ board, the value is changed during the configuration
 
 const int oneSec_ns = 1000000000; 	///< 1 second in nanosecond
 const int oneSec_ms = 1000000; 		///< 1 second in millisecond
 
-static volatile int modeSwitchesCount = 0; 		///< mode switch counter: to count the switch from primary to secondary mode in a real-time thread
+static volatile int modeSwitchesCount = 0; 	///< mode switch counter: to count the switch from primary to secondary mode in a real-time thread
 const char * backtrace_file = "backtrace.txt";	///< the switch from primary to secondary mode in a real-time thread are logged into the file
 FILE * backtrace_fd; 							///< a file descriptor for backtrace_file
 
 
-const char * logfile = "log_LC.txt"; ///<logfile path
-FILE * fp = fopen(logfile,"w"); ///<open a file object
+const char * logfile = "log_LC.txt"; 	///<logfile path
+FILE * fp = fopen(logfile,"w"); 	///<open a file object
 
 /********************************************************/
 //GLOBAL VARIABLES
 RoboteqDevice device;				///<New instance of the Roboteq-device class.
 unsigned timeoutPub =0;				///<timeout counter: incremented when mutex timeout occurs
 /********************************************************/
-int gp_motorErr = 0;		///<Return error value for motor controller related functions (0 if successful)  [motorErrNumber, motorErr]
+int gp_motorErr = 0;		
 int gp_motorCurrErr = 0;
 int gp_motorBatCurrErr = 0;
 int gp_motorVoltErr = 0;
 int gp_motorBatVoltErr = 0;
-double gp_motorCurr = 0;		///<
-double gp_motorBatCurr = 0;		///<
-double gp_motorVolt = 0;		///<
-double gp_motorBatVolt = 0;		///<
+double gp_motorCurr = 0;		
+double gp_motorBatCurr = 0;		
+double gp_motorVolt = 0;		
+double gp_motorBatVolt = 0;		
 int gp_motorCmdNow = 0;
 int gp_motorFaultFlagErr = 0;
 int gp_motorCmdActualErr = 0;
 
-int motorControllerStatus = RQ_ERR_NOT_CONNECTED;					///<motor controller initialization status
-xeno_interface::Dimrob buffer;	///<Gloabla variable for [local variable in RT thread] <> [local variable in non-RT thread (or ROS msg in Dimrob.msg)]
+int motorControllerStatus = RQ_ERR_NOT_CONNECTED;	///<motor controller initialization status
+xeno_interface::Dimrob buffer;				///<Gloabla variable for [local variable in RT thread] <> [local variable in non-RT thread (or ROS msg in Dimrob.msg)]
 /********************************************************/
 
 
@@ -196,7 +192,7 @@ void task_rt(void *arg)
 	stateMachine FSM;
 	PID pidRPM;
 
-	std::shared_ptr<ros::NodeHandle> nh(new ros::NodeHandle()); //two node handle in 1 program???
+	std::shared_ptr<ros::NodeHandle> nh(new ros::NodeHandle());
 	RealtimeSubscriber<xeno_interface::Dimrob> subscriberLC;
 	subscriberLC.subscribe(nh, "actuatorDimRob", 1, 1);
 
@@ -209,9 +205,7 @@ void task_rt(void *arg)
 
 	FSM.freqLoop = FREQ_HZ_RT;
 	dtRPM = oneSec_ns/FREQ_HZ_RT;
-	pidRPM.pid_initialize(0.8,0,50,2); //todo tune PID parameter
-
-	rt_fprintf (fp, "%s	%s	%s	%s	%s	%s	%s	%s\n", "TimeStamp (ms)", "motorCmdSent","motorRPM (RPM)","motorAmp (A)","battAmp (A)","internalVolt (V)","battVolt (V)","supplyPress (bar)");
+	pidRPM.pid_initialize(0.8,0,50,2);
 
 	previous = rt_timer_read();//the timer start here.
 
@@ -228,55 +222,6 @@ void task_rt(void *arg)
 		{
 			rt_printf("read sensor value failed (err=%d)\n",FSM.daqErr);
 		}
-//		else
-//			rt_printf("Time: %ld.%06ld ms\n"
-//							"State: %d\n"
-//							"Battery: %g V\n"
-//							"Power electronics box temp: %g °C\n"
-//							"Motor Temperature in V: %g V\n"
-//							"Flow sensor: %g l/min\n"
-//							"Pressure sensor: %g bar\n"
-//							"Temperature sensor: %g °C\n"
-//							"Pressure 1 (R, A port): %g bar\n"
-//							"Pressure 2 (R, B port): %g bar\n"
-//							"Pressure 4 (L, A port): %g bar\n"
-//							"Pressure 5 (L, B port): %g bar\n"
-//							"Pressure 3 (Supply): %g bar\n"
-//							"Mode Valve: %s\n"
-//							"Speed Valve: %s\n"
-//							"Charger enabled: %s\n"
-//							"CHarger powered: %s\n"
-//							"HW estop pressed: %s\n"
-//							"SW estop pressed: %s\n"
-//							"Cooler: %s\n"
-//							"Signal light: %s\n"
-//							"Auto mode: %s \n"
-//							"Manual mode: %s \n"
-//							"Flow valve Left: %g V\n"
-//							"Flow valve Left: %g V\n"
-//							"MotorCommand(serial): %g\n"
-//							"Counter %d.................%d......%g rpm\n"
-//							,  time_stamp_ms, time_stamp_us, FSM.nowState,
-//							FSM.val_volt_bat, FSM.val_temp_scb,
-//							FSM.val_temp_mot,FSM.val_flow_oil,
-//							FSM.val_pres_oil,FSM.val_temp_oil,
-//							FSM.val_pres_oil_1,
-//							FSM.val_pres_oil_2,
-//							FSM.val_pres_oil_4,
-//							FSM.val_pres_oil_5,
-//							FSM.val_pres_oil_3,
-//							FSM.autoModeValEnabled == 1 ? "YES" : "NO",
-//							FSM.highSpeedValEnabled == 1 ? "YES" : "NO",
-//							FSM.chargerEnabled == 1 ? "YES" : "NO",
-//							FSM.chargerPowered == 1 ? "YES" : "NO",
-//							FSM.hwEstopOpened == 0 ? "YES" : "NO",
-//							FSM.swEstopEnabled == 1 ? "YES" : "NO",
-//							FSM.coolerEnabled == 1 ? "YES" : "NO",
-//							FSM.lightEnabled == 1 ? "YES" : "NO",
-//							FSM.autoModeEnabled == 1 ? "YES" : "NO",
-//							FSM.manualModeEnabled == 1 ? "YES" : "NO",
-//							FSM.flowValveLeft, FSM.flowValveRight,FSM.motorCmd,
-//							SUBD_CNT-11, FSM.encoderCount, FSM.motorRPMnow);
 
 		xeno_interface::Dimrob dimrobMsg;
 		int ret = subscriberLC.retrieveMessage(dimrobMsg,timeoutUs);
@@ -285,7 +230,6 @@ void task_rt(void *arg)
 		{
 			case RealtimeSubscriber<xeno_interface::Dimrob>::SUCCESS:
 			{
-//				std::cout<<"Successfully read message"<<std::endl;
 				FSM.swEstopEnabled = dimrobMsg.o_swEstopEnabled;
 				FSM.guiTestModeEnabled = dimrobMsg.o_guiTestModeEnabled;
 
@@ -306,10 +250,10 @@ void task_rt(void *arg)
 			}
 			break;
 			case RealtimeSubscriber<xeno_interface::Dimrob>::QUEUE_BUSY:
-//				rt_printf("Retrieving data timed out (queue is busy).\n");
+				rt_printf("Retrieving data timed out (queue is busy).\n");
 			break;
 			case RealtimeSubscriber<xeno_interface::Dimrob>::BUFFER_EMPTY:
-//				rt_printf("No data to retrieve.\n");
+				rt_printf("No data to retrieve.\n");
 			break;
 		}
 
@@ -317,104 +261,53 @@ void task_rt(void *arg)
 
 		FSM.CheckErrCondition();
 
-//rt_printf("state: %d, idleTimeOut_ms %ld and FSM.idleSetTime %d\n", FSM.nowState, idleTimeOut_ms, FSM.idleSetTime);
-
 		switch(FSM.GetNowState())
 		{
 		case STATE_IDLE :
+		{
+
+			if((FSM.hwEstopOpened == false) || (FSM.swEstopEnabled == true) || (FSM.errCondDetected == true))
 			{
-
-				if((FSM.hwEstopOpened == false) || (FSM.swEstopEnabled == true) || (FSM.errCondDetected == true))
-				{
-					FSM.daqOutErr = FSM.SetErrorState(pciboards[0]);
-				}
-				else
-				{
-
-					if(FSM.manualModeEnabled | FSM.autoModeEnabled)
-					{
-						idleTimeOut_ms = (now-FSM.idleSetTime)/oneSec_ms;
-					}
-					else
-					{
-						idleTimeOut_ms = 0;
-					}
-
-
-					if((FSM.manualModeEnabled == true) && (idleTimeOut_ms > IDLE_TIME_MS))
-					{
-
-
-//						//todo need to change to accept if motor controller is connected and turned off again
-//						if(motorControllerStatus != RQ_SUCCESS) //if the motor controller driver is not initialized
-//						{
-//
-//							Set_Up_Driver();
-//
-//						}
-
-
-						if(FSM.guiTestModeEnabled == false)
-						{
-							FSM.daqOutErr = FSM.SetManualState(pciboards[0]);
-						}
-						else
-						{
-							FSM.daqOutErr = FSM.SetTestState(pciboards[0]);
-						}
-					}
-					else if((FSM.autoModeEnabled == true) && (idleTimeOut_ms > IDLE_TIME_MS))
-					{
-
-//						//todo need to change to accept if motor controller is connected and turned off again
-//						if(motorControllerStatus != RQ_SUCCESS) //if the motor controller driver is not initialized
-//						{
-//							Set_Up_Driver();
-//						}
-
-
-						if(FSM.guiTestModeEnabled == false)
-						{
-							FSM.daqOutErr = FSM.SetAutoState(pciboards[0]);
-						}
-						else
-						{
-							FSM.daqOutErr = FSM.SetTestState(pciboards[0]);
-						}
-
-					}
-					else
-					{
-						//Idle State: the desired motor command is 0 and no other command for actuator is required
-						//rt_printf("%ld ms\n", idleTimeOut_ms);
-
-						FSM.motorCmd = 0;
-
-						FSM.autoModeValEnabled = false;
-						FSM.highSpeedValEnabled = false;
-						FSM.flowValveLeft = 0;
-						FSM.flowValveRight = 0;
-						FSM.coolerEnabled = false;
-						FSM.lightEnabled = false;
-
-					}
-
-				}
+				FSM.daqOutErr = FSM.SetErrorState(pciboards[0]);
 			}
-			break;
-
-		case STATE_ERROR :
+			else
 			{
-				if( (FSM.hwEstopOpened == true) &&  (FSM.swEstopEnabled == false)  && (FSM.errCondDetected == false))
+
+				if(FSM.manualModeEnabled | FSM.autoModeEnabled)
 				{
-					FSM.daqOutErr = FSM.SetIdleState(pciboards[0]);
+					idleTimeOut_ms = (now-FSM.idleSetTime)/oneSec_ms;
 				}
 				else
 				{
-					//Error State: the desired motor command is 0 and no other command for actuator is required
-					FSM.motorCmd = 0;
+					idleTimeOut_ms = 0;
+				}
 
-					//todo disable other actuators as well like in setErrorState ?!
+				if((FSM.manualModeEnabled == true) && (idleTimeOut_ms > IDLE_TIME_MS))
+				{
+
+					if(FSM.guiTestModeEnabled == false)
+					{
+						FSM.daqOutErr = FSM.SetManualState(pciboards[0]);
+					}
+					else
+					{
+						FSM.daqOutErr = FSM.SetTestState(pciboards[0]);
+					}
+				}
+				else if((FSM.autoModeEnabled == true) && (idleTimeOut_ms > IDLE_TIME_MS))
+				{
+					if(FSM.guiTestModeEnabled == false)
+					{
+						FSM.daqOutErr = FSM.SetAutoState(pciboards[0]);
+					}
+					else
+					{
+						FSM.daqOutErr = FSM.SetTestState(pciboards[0]);
+					}
+				}
+				else
+				{
+					FSM.motorCmd = 0;
 					FSM.autoModeValEnabled = false;
 					FSM.highSpeedValEnabled = false;
 					FSM.flowValveLeft = 0;
@@ -422,139 +315,144 @@ void task_rt(void *arg)
 					FSM.coolerEnabled = false;
 					FSM.lightEnabled = false;
 
-
-					rt_printf("HW estop pressed: %s\n"
-							"SW estop pressed: %s\n"
-							"Error condition detected: %s\n"
-							"DAQ read error %d\n"
-							"DAQ write error %d\n",
-							FSM.hwEstopOpened == 0 ? "YES" : "NO",
-							FSM.swEstopEnabled == 1 ? "YES" : "NO",
-							FSM.errCondDetected == 1 ? "YES" : "NO",
-							FSM.daqErr,
-							FSM.daqOutErr);
 				}
 			}
-			break;
+		}
+		break;
+
+		case STATE_ERROR :
+		{
+			if( (FSM.hwEstopOpened == true) &&  (FSM.swEstopEnabled == false)  && (FSM.errCondDetected == false))
+			{
+				FSM.daqOutErr = FSM.SetIdleState(pciboards[0]);
+			}
+			else
+			{
+				//Error State: the desired motor command is 0 and no other command for actuator is required
+				FSM.motorCmd = 0;
+
+				FSM.autoModeValEnabled = false;
+				FSM.highSpeedValEnabled = false;
+				FSM.flowValveLeft = 0;
+				FSM.flowValveRight = 0;
+				FSM.coolerEnabled = false;
+				FSM.lightEnabled = false;
+
+				rt_printf("HW estop pressed: %s\n"
+						"SW estop pressed: %s\n"
+						"Error condition detected: %s\n"
+						"DAQ read error %d\n"
+						"DAQ write error %d\n",
+						FSM.hwEstopOpened == 0 ? "YES" : "NO",
+						FSM.swEstopEnabled == 1 ? "YES" : "NO",
+						FSM.errCondDetected == 1 ? "YES" : "NO",
+						FSM.daqErr,
+						FSM.daqOutErr);
+			}
+		}
+		break;
+		
 		case STATE_MANUAL :
+		{
+			if( (FSM.hwEstopOpened == false) ||  (FSM.swEstopEnabled == true) || (FSM.errCondDetected == true))
 			{
-				if( (FSM.hwEstopOpened == false) ||  (FSM.swEstopEnabled == true) || (FSM.errCondDetected == true))
-				{
-					FSM.daqOutErr = FSM.SetErrorState(pciboards[0]);
-				}
-				else if(FSM.manualModeEnabled == false)
-				{
-					FSM.daqOutErr = FSM.SetIdleState(pciboards[0]);
-				}
-				else if(FSM.guiTestModeEnabled == true)
-				{
-					FSM.daqOutErr = FSM.SetTestState(pciboards[0]);
-				}
-				else
-				{
-					//Manual state: the desired motor command is 0
-					//send motor command via mScript: hard-wired to motor controller
-
-					FSM.daqOutErr = pciboards[0]->WriteDO(SUBD_DIO,DO_COOLER, FSM.coolerEnabled);
-					FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_LIGHT, FSM.lightEnabled);
-
-					FSM.motorCmd = 0;
-
-					FSM.autoModeValEnabled = false;
-					FSM.highSpeedValEnabled = false;
-					FSM.flowValveLeft = 0;
-					FSM.flowValveRight = 0;
-
-				}
+				FSM.daqOutErr = FSM.SetErrorState(pciboards[0]);
 			}
-			break;
+			else if(FSM.manualModeEnabled == false)
+			{
+				FSM.daqOutErr = FSM.SetIdleState(pciboards[0]);
+			}
+			else if(FSM.guiTestModeEnabled == true)
+			{
+				FSM.daqOutErr = FSM.SetTestState(pciboards[0]);
+			}
+			else
+			{
+				//Manual state: the desired motor command is 0
+				//send motor command via mScript: hard-wired to motor controller
+				FSM.daqOutErr = pciboards[0]->WriteDO(SUBD_DIO,DO_COOLER, FSM.coolerEnabled);
+				FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_LIGHT, FSM.lightEnabled);
+				FSM.motorCmd = 0;
+				FSM.autoModeValEnabled = false;
+				FSM.highSpeedValEnabled = false;
+				FSM.flowValveLeft = 0;
+				FSM.flowValveRight = 0;
+
+			}
+		}
+		break;
+
 		case STATE_AUTO:
+		{
+			if((FSM.hwEstopOpened == false) ||  (FSM.swEstopEnabled == true)  || (FSM.errCondDetected == true))
 			{
-				if( (FSM.hwEstopOpened == false) ||  (FSM.swEstopEnabled == true)  || (FSM.errCondDetected == true))
-				{
-					FSM.daqOutErr = FSM.SetErrorState(pciboards[0]);
-				}
-				else if(FSM.autoModeEnabled == false)
-				{
-					FSM.daqOutErr = FSM.SetIdleState(pciboards[0]);
-				}
-				else if(FSM.guiTestModeEnabled == true)
-				{
-					FSM.daqOutErr = FSM.SetTestState(pciboards[0]);
-				}
-				else
-				{
-
-					//Auto state: Closed-loop control
-					FSM.daqOutErr =  pciboards[0]->WriteDA(AO_FLOW_VAL_L,FSM.flowValveLeft);
-					FSM.daqOutErr =  pciboards[0]->WriteDA(AO_FLOW_VAL_R,FSM.flowValveRight);
-
-					FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_COOLER, FSM.coolerEnabled);
-					FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_LIGHT, FSM.lightEnabled);
-
-					FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_SPEED_VAL, FSM.highSpeedValEnabled);
-
-					//FSM.motorCmd defined using joystick D-pad ... for temporary solution
-
-						/*
-						//PID control - desired motor RPM
-						errorRPM = FSM.motorRPM - FSM.motorRPMCurrent; //desiredMotorRPM - currentMotorRPM
-						pidRPM.pid_update(errorRPM, dtRPM, val_control);
-
-						FSM.motorCmd = val_control; //todo test and see if pidRPM.pid_update(double, double, int) is possible instead of double, double, double
-
-						rt_printf("desired RPM: %g and RPM %g and desired motor command in [int %d, double %g] \n", FSM.motorRPM, FSM.motorRPMCurrent, FSM.motorCmd, val_control);
-
-						*/
-							//joystick message for motor command is already copied to FSM.motorCmd above
-						FSM.autoModeValEnabled = true;
-
-				}
-
+				FSM.daqOutErr = FSM.SetErrorState(pciboards[0]);
 			}
-			break;
+			else if(FSM.autoModeEnabled == false)
+			{
+				FSM.daqOutErr = FSM.SetIdleState(pciboards[0]);
+			}
+			else if(FSM.guiTestModeEnabled == true)
+			{
+				FSM.daqOutErr = FSM.SetTestState(pciboards[0]);
+			}
+			else
+			{
+
+				//Auto state: Closed-loop control
+				FSM.daqOutErr =  pciboards[0]->WriteDA(AO_FLOW_VAL_L,FSM.flowValveLeft);
+				FSM.daqOutErr =  pciboards[0]->WriteDA(AO_FLOW_VAL_R,FSM.flowValveRight);
+
+				FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_COOLER, FSM.coolerEnabled);
+				FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_LIGHT, FSM.lightEnabled);
+
+				FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_SPEED_VAL, FSM.highSpeedValEnabled);
+
+				//PID control - desired motor RPM
+				errorRPM = FSM.motorRPM - FSM.motorRPMCurrent; //desiredMotorRPM - currentMotorRPM
+				pidRPM.pid_update(errorRPM, dtRPM, val_control);
+
+				FSM.motorCmd = val_control;
+				//joystick message for motor command is already copied to FSM.motorCmd above
+				FSM.autoModeValEnabled = true;
+			}
+		}
+		break;
+
 		case STATE_TEST:
+		{
+			if( (FSM.hwEstopOpened == false) ||  (FSM.swEstopEnabled == true)  || (FSM.errCondDetected == true))
+			{
+				FSM.daqOutErr = FSM.SetErrorState(pciboards[0]);
+			}
+			else if((FSM.autoModeEnabled == false) && (FSM.manualModeEnabled == false))
+			{
+				FSM.daqOutErr = FSM.SetIdleState(pciboards[0]);
+			}
+			else if(FSM.guiTestModeEnabled == false)
+			{
+				FSM.daqOutErr = FSM.SetIdleState(pciboards[0]);
+			}
+			else
+			{
+				//Auto state: Closed-loop control vs. open-loop control(i.e. test mode)
+				FSM.daqOutErr =  pciboards[0]->WriteDA(AO_FLOW_VAL_L,FSM.flowValveLeft);
+				FSM.daqOutErr =  pciboards[0]->WriteDA(AO_FLOW_VAL_R,FSM.flowValveRight);
+				FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_COOLER, FSM.coolerEnabled);
+				FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_LIGHT, FSM.lightEnabled);
+				FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_SPEED_VAL, FSM.highSpeedValEnabled);
+
+				if(FSM.openLoopModeEnabled == true)
 				{
 
-					if( (FSM.hwEstopOpened == false) ||  (FSM.swEstopEnabled == true)  || (FSM.errCondDetected == true))
-					{
-						FSM.daqOutErr = FSM.SetErrorState(pciboards[0]);
-					}
-					else if((FSM.autoModeEnabled == false) && (FSM.manualModeEnabled == false))
-					{
-						FSM.daqOutErr = FSM.SetIdleState(pciboards[0]);
-					}
-					else if(FSM.guiTestModeEnabled == false)
-					{
-						FSM.daqOutErr = FSM.SetIdleState(pciboards[0]);
-					}
-					else
-					{
-						//Auto state: Closed-loop control vs. open-loop control(i.e. test mode)
-						FSM.daqOutErr =  pciboards[0]->WriteDA(AO_FLOW_VAL_L,FSM.flowValveLeft);
-						FSM.daqOutErr =  pciboards[0]->WriteDA(AO_FLOW_VAL_R,FSM.flowValveRight);
-
-						FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_COOLER, FSM.coolerEnabled);
-						FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_LIGHT, FSM.lightEnabled);
-
-						FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_SPEED_VAL, FSM.highSpeedValEnabled);
-
-						if(FSM.openLoopModeEnabled == true)
-						{
-
-							//open-loop control of motor command
-							//from GUI or HC: desired motor command stored into FSM.motorCmd variable
-
-							FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_MODE_VAL, FSM.autoModeValEnabled);
-							//no change in FSM.motorCmd from gs_motorCmd
-
-						}
-
-
-					}
-
+					//open-loop control of motor command
+					//from GUI or HC: desired motor command stored into FSM.motorCmd variable
+					FSM.daqOutErr =  pciboards[0]->WriteDO(SUBD_DIO,DO_MODE_VAL, FSM.autoModeValEnabled);
+					//no change in FSM.motorCmd from gs_motorCmd
 				}
-				break;
+			}
+		}
+		break;
 		}
 
 
@@ -647,7 +545,6 @@ void Set_Up_Driver()
 	if(motorControllerStatus != RQ_SUCCESS)
 	{
 		printf("Error connecting to device: %d\n",motorControllerStatus);
-//		exit(EXIT_FAILURE);
 	}
 	else
 	{
@@ -660,7 +557,7 @@ void Set_Up_Driver()
  *  1. task_nrt (low priority):\n
  *	-Acquire the sensors inputs and the actuators outputs from RT thread and publish the data\n
  *	-Send the desired motor command to the motor controller (Roboteq API for more information)\n
- *  -acquire the timestamp, the desired motor command, and sensor values from the real-time task\n
+ *  	-acquire the timestamp, the desired motor command, and sensor values from the real-time task\n
  *
  *  @param[in] arg
  *  @return void
@@ -731,7 +628,6 @@ void task_nrt(void *arg)
 				gp_motorVoltErr = motorVoltErr;
 				gp_motorBatVoltErr = motorBatVoltErr;
 				
-				//todo change this
 				gp_motorCurr = motorCurr*0.1;
 				gp_motorBatCurr = motorBatCurr*0.1;
 				gp_motorVolt = motorVolt*0.1;
@@ -762,9 +658,9 @@ void task_nrt(void *arg)
 			}
 
 			//increase or decrease actual motor command gradually with a rate of MOTOR_CMD_RATE
-            //msg_pub.o_motorCmd: 	[double] - copy of the desired motor command from RT thread
-            //motorCmdCal:			[double]  - calculated motor command based on MOTOR_CMD_RATE
-            //motorCmdActual: 		[integer] - actual value commanded to motor (= rounded value of motorCmdCal)
+            		//msg_pub.o_motorCmd: 	[double] - copy of the desired motor command from RT thread
+            		//motorCmdCal:			[double]  - calculated motor command based on MOTOR_CMD_RATE
+            		//motorCmdActual: 		[integer] - actual value commanded to motor (= rounded value of motorCmdCal)
 			if(motorCmdCal < msg_pub.o_motorCmd)
 			{
 				motorCmdCal += MOTOR_CMD_RATE/static_cast<double>(FREQ_HZ_NRT);
@@ -976,7 +872,6 @@ void warn_upon_switch(int sig __attribute__((unused)))
     /* Dump a backtrace of the frame which caused the switch to
        secondary mode: */
     nentries = backtrace(bt,sizeof(bt)/sizeof(bt[0]));
-//    backtrace_symbols_fd(bt,nentries,fileno(stdout));
     backtrace_symbols_fd(bt,nentries,fileno(backtrace_fd));
 
     modeSwitchesCount++;
@@ -1088,7 +983,7 @@ int main(int argc, char* argv[])
 
 	fprintf(stderr, "end of main, Mode Switches = %d, Time out (mutexPub) = %d\n", modeSwitchesCount, timeoutPub);
 
-    fclose(backtrace_fd);
+    	fclose(backtrace_fd);
 
 
 	return 0;

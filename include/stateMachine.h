@@ -54,8 +54,7 @@ public:
 	int    	motorCmdActual;     		///< Motor controller command verify via serial
 	int    	motorFaultFlag;     		///< Motor controller fault flag
 	
-	//same list as ROS message in /xeno_inteface/msg/Hyd.msg
-	int		nowState; 		///< Current state in state machine
+	int	nowState; 			///< Current state in state machine
 	double	motorCmd; 			///< Desired motor command
 	int 	motorCmdNow;			///< Current motor command
 	bool	errCondDetected;		///< Error condition detected;

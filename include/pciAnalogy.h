@@ -50,17 +50,17 @@ public:
 
 
     // Counters:
-    virtual int 	StartCNT(int subdevice, int channel_pfi);
-    virtual int 	ReadCNT(int subdevice, int channel_pulse, signed &counter, int freq, double &rpm);
+    virtual int     StartCNT(int subdevice, int channel_pfi);
+    virtual int     ReadCNT(int subdevice, int channel_pulse, signed &counter, int freq, double &rpm);
 
     // etc...
-    void 	printDeviceInfo(a4l_desc_t *dsc);
-    int 	rawToDouble(int ch, a4l_chinfo_t *chan, a4l_rnginfo_t *rng, double *dst, void *src);
+    void    printDeviceInfo(a4l_desc_t *dsc);
+    int     rawToDouble(int ch, a4l_chinfo_t *chan, a4l_rnginfo_t *rng, double *dst, void *src);
 
 private:
 
-    a4l_desc_t      dsc; ///<Structure containing device-information useful to users
-    a4l_sbinfo_t 	*info; 	///<Structure containing sub-device information
+    a4l_desc_t      dsc;        ///<Structure containing device-information useful to users
+    a4l_sbinfo_t    *info; 	///<Structure containing sub-device information
 
     // used by ADC
     a4l_chinfo_t    *ai_chinfo[ADC_NUM];	///<Structure containing analog input sub-device channel information
