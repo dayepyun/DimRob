@@ -174,7 +174,8 @@ typedef struct {
  * The functions are re-defined in pciAnalogy class, and the function defined in pciAnalogy can be called from pciBase->function.\n
  *
  ***********************************************/
-class pciBase {
+class pciBase 
+{
 public:
 
     //Constructor & destructor

@@ -25,7 +25,8 @@
  * Therefore, in the main file, the user can construct a pciBase class and call the data acquisition functions from the pciAnalogy class.\n
  *
  ***********************************************/
-class pciAnalogy : public pciBase {
+class pciAnalogy : public pciBase 
+{
 public:
 
 	//Constructor & destructor
